@@ -26,10 +26,24 @@ def cycle_pairs(iterable):
     return chain(izip(a, b), [(last, first)])
 
 
+class ContextHasRequestMixin(object):
+    """
+    A mixin which checks if there is a ``request`` variable
+    included in the context.
+    """
+    def clean(self, data, context):
+        request = context.get('request')
+        if not request:
+            raise TemplateSyntaxError("Couldn't find request in context: %s" %
+                                      context)
+        return super(RequestExists, self).clean(data, context)
+
+
 class CleanQueryNameMixin(object):
     """
     A mixin to clean with given name of the sort query
     """
+
     def clean_with(self, value):
         if not isinstance(value, basestring):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
@@ -38,7 +52,7 @@ class CleanQueryNameMixin(object):
         return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
 
 
-class Sort(ttag.helpers.AsTag, CleanQueryNameMixin):
+class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     """
     {% sort queryset [with NAME] as VARIABLE %}
 
@@ -49,13 +63,6 @@ class Sort(ttag.helpers.AsTag, CleanQueryNameMixin):
 
     data = ttag.Arg()
     with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_QUERY_NAME)
-
-    def clean(self, data, context):
-        request = context.get('request')
-        if not request:
-            raise TemplateSyntaxError("Couldn't find request in context: %s" %
-                                      context)
-        return data
 
     def as_value(self, data, context):
         ordering = self.get_fields(context['request'], data['with'])
@@ -76,7 +83,7 @@ class Sort(ttag.helpers.AsTag, CleanQueryNameMixin):
         return []
 
 
-class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin):
+class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     """
     Parses a tag that's supposed to be in this format:
 
@@ -99,10 +106,6 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin):
         as_required = False
 
     def as_value(self, data, context):
-        request = context.get('request')
-        if not request:
-            raise TemplateSyntaxError("Couldn't find request in context: %s" %
-                                      context)
         label = self.nodelist.render(context)
         if not label.strip():
             raise TemplateSyntaxError("No label was specified")
