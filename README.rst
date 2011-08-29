@@ -38,9 +38,9 @@ links without modifying your views.
         ...
     </tr>
 
-    The template tag takes a comma separated list of sorting statements.
-    It also is a block tag and allows you to set the label of the generated
-    link. The previous snippet will be rendered like this::
+   The template tag takes a comma separated list of sorting statements.
+   It also is a block tag and allows you to set the label of the generated
+   link. The previous snippet will be rendered like this::
 
     <tr>
         <th><a href="/current/path/?sort=first_name" title="Sort by 'first_name' (asc)">Name</a></th>
