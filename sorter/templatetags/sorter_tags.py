@@ -65,8 +65,8 @@ class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_QUERY_NAME)
 
     def as_value(self, data, context):
-        ordering = self.get_fields(context['request'], data['with'])
         value = data['data']
+        ordering = self.get_fields(context, data['with'])
         if ordering:
             try:
                 return value.order_by(*ordering)
@@ -75,9 +75,9 @@ class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
                     raise
         return value
 
-    def get_fields(self, request, name):
+    def get_fields(self, context, name):
         try:
-            return request.GET[name].split(',')
+            return context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
             pass
         return []
