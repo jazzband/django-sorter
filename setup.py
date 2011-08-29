@@ -7,8 +7,7 @@ read = lambda filepath: codecs.open(filepath, 'r', 'utf-8').read()
 setup(
     name='django-sorter',
     version=":versiontools:sorter:",
-    description='A helper app for sorting objects in Django templates and '
-                'generating links without modifying the views.',
+    description='A helper app for sorting objects in Django templates.',
     long_description=read(path.join(path.dirname(__file__), 'README.rst')),
     author='Jannis Leidel',
     author_email='jannis@leidel.info',
