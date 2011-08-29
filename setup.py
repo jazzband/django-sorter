@@ -14,9 +14,9 @@ setup(
     author_email='jannis@leidel.info',
     license='BSD',
     url='http://github.com/jezdez/django-sorter/',
-    packages=['sorter'],
+    packages=['sorter', 'sorter.templatetags'],
     package_data={
-        'sorter': ['templates/*.html'],
+        'sorter': ['templates/**.html'],
     },
     classifiers=[
         "Development Status :: 3 - Alpha",
