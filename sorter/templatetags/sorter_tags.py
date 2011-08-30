@@ -88,6 +88,17 @@ class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
         return []
 
 
+class TemplateAsTagOptions(ttag.helpers.as_tag.AsTagOptions):
+
+    def __init__(self, meta, *args, **kwargs):
+        super(TemplateAsTagOptions, self).__init__(meta=meta, *args, **kwargs)
+        self.template_name = getattr(meta, 'template_name', 'sortlink')
+
+
+class TemplateAsTagMetaclass(ttag.helpers.as_tag.AsTagMetaclass):
+    options_class = TemplateAsTagOptions
+
+
 class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     """
     Parses a tag that's supposed to be in this format:
@@ -101,6 +112,8 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     {% endsortlink %}
 
     """
+    __metaclass__ = TemplateAsTagMetaclass
+
     with_ = ttag.Arg(required=False, named=True, default=settings.SORTER_QUERY_NAME)
     rel = ttag.Arg(required=False, named=True)
     class_ = ttag.Arg(required=False, named=True)
@@ -109,6 +122,7 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
     class Meta:
         block = True
         as_required = False
+        template_name = 'sortlink'
 
     def as_value(self, data, context):
         label = self.nodelist.render(context)
@@ -117,7 +131,7 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
 
         # The queries of the current URL, not using sequences here
         # since the order of sorting arguments matter
-        url = URLObject.parse(request.get_full_path())
+        url = URLObject.parse(context['request'].get_full_path())
         queries = url.query_dict(seq=False)
 
         name, orderings = data['with'], data['by']
@@ -134,7 +148,7 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
             parts.append(_("'%(part)s' (%(dir)s)") %
                            {'dir': dir_, 'part': part})
         title = _('Sort by %s') % get_text_list(parts, _('and'))
-        extra_context = dict(data, title=title, label=label, url=url)
+        extra_context = dict(data, title=title, label=label, url=url, query=query)
         return render_to_string(self.using(data), extra_context, context)
 
     def find_query(self, wanted, orderings, default):
@@ -148,17 +162,41 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
                 return next
         return default
 
-    def using(self, data, template_name='sorter/sortlink.html'):
+    def using(self, data):
         """
         This template tag will use 'sorter/sortlink.html' by default,
-        but uses 'sorter/sortlink_SUFFIX.html' additionally if the
+        but uses 'sorter/sortlink_NAME.html' additionally if the
         'with' argument is given.
         """
+        template_name = 'sorter/%s.html' % self._meta.template_name
         name = data.get('with')
         if not name:
             return template_name
-        return ['sorter/sortlink_%s.html' % name] + [template_name]
+        return ['sorter/%s_%s.html' %
+                (self._meta.template_name, name)] + [template_name]
+
+
+class Sortform(Sortlink):
+    """
+    Parses a tag that's supposed to be in this format:
+
+    {% sortform [with NAME] [rel REL] [method METHOD] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
+        LABEL
+    {% endsortform %}
+
+    {% sortform with "objects" by "creation_date,-title" method "post" %}
+        {% trans "Creation and title" %}
+    {% endsortform %}
+
+    """
+    method = ttag.Arg(named=True, required=False, default='get')
+
+    class Meta:
+        block = True
+        as_required = False
+        template_name = 'sortform'
 
 
 register.tag(Sort)
 register.tag(Sortlink)
+register.tag(Sortform)
