@@ -21,12 +21,14 @@ links without modifying your views.
            "django.core.context_processors.request",
        )
 
-3. Add this line at the top of your template to load the sorting tags:
+3. Add this line at the top of your template to load the sorting tags::
 
        {% load sorter_tags %}
 
 4. Decide on a variable that you would like to order by, and use the
    sort tag on that variable before iterating over it.
+
+   ::
 
        {% sort objects as sorted_objects %}
 
