@@ -47,9 +47,14 @@ class CleanQueryNameMixin(object):
     def clean_with(self, value):
         if not isinstance(value, basestring):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
+        # in case the value equals the default query name
         if value == settings.SORTER_QUERY_NAME:
             return value
-        return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
+        # or it already has the default query name prefixed
+        elif value.startswith(settings.SORTER_QUERY_NAME):
+            return value
+        else:
+            return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
 
 
 class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
