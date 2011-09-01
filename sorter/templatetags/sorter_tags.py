@@ -68,6 +68,10 @@ class Sort(SorterAsTag):
         return value
 
     def ordering(self, context, name):
+        """
+        Given the template context and the name of the sorting
+        should return a list of ordering values.
+        """
         try:
             return context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
