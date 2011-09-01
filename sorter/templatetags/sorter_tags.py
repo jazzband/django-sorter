@@ -1,4 +1,3 @@
-from itertools import tee, izip, chain
 from urlobject import URLObject
 
 from django import template
@@ -11,19 +10,10 @@ from django.utils.text import get_text_list
 
 import ttag
 
+from sorter.utils import cycle_pairs
+
 register = template.Library()
 
-
-def cycle_pairs(iterable):
-    """
-    Cycles through the given iterable, returning an iterator which
-    returns the current and the next item. When reaching the end
-    it returns the last and the first item.
-    """
-    first, last = iterable[0], iterable[-1]
-    a, b = tee(iterable)
-    next(b, None)
-    return chain(izip(a, b), [(last, first)])
 
 
 class ContextHasRequestMixin(object):
