@@ -49,28 +49,29 @@ class Sort(SorterAsTag):
     {% sort object_list with "objects" as sorted_objects %}
 
     """
-    exceptions = [FieldError]
+    exceptions = (FieldError,)
 
     data = ttag.Arg()
     with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_QUERY_NAME)
 
     def as_value(self, data, context):
         value = data['data']
-        ordering = self.get_fields(context, data['with'])
-        if ordering:
-            try:
-                return value.order_by(*ordering)
-            except self.exceptions:
-                if settings.SORTER_RAISE_EXCEPTIONS:
-                    raise
+        ordering = self.ordering(context, data['with'])
+        try:
+            ordered_value = value.order_by(*ordering)
+            if settings.SORTER_EVALUATE_AFTERWARDS:
+                ordered_value = list(ordered_value)
+            return ordered_value
+        except self.exceptions:
+            if settings.SORTER_RAISE_EXCEPTIONS:
+                raise
         return value
 
-    def get_fields(self, context, name):
+    def ordering(self, context, name):
         try:
             return context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
-            pass
-        return []
+            return []
 
 
 class TemplateAsTagOptions(ttag.helpers.as_tag.AsTagOptions):
