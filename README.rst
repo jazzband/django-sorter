@@ -32,7 +32,7 @@ links without modifying your views.
 
        {% sort objects as sorted_objects %}
 
-5. Optionally, you can display different sort links::
+5. Optionally, you can display different sort links or forms::
 
     <tr>
        <th>{% sortlink by "first_name" %}Name{% endsortlink %}</th>
@@ -45,12 +45,14 @@ links without modifying your views.
    link. The previous snippet will be rendered like this::
 
     <tr>
-        <th><a href="/current/path/?sort=first_name" title="Sort by 'first_name' (asc)">Name</a></th>
-        <th><a href="/current/path/?sort=creation_date,-title" title="Sort by 'creation_date' (asc) and 'title' (desc)">Creation</a></th>
+        <th><a href="/?sort=first_name" title="Sort by 'first_name' (asc)">Name</a></th>
+        <th><a href="/?sort=creation_date,-title" title="Sort by 'creation_date' (asc) and 'title' (desc)">Creation</a></th>
         ...
     </tr>
 
-That's it!
+    Similarly the ``{% sortform %}`` template tag renders a form instead of
+    a simple link.
 
+That's it!
 
 .. _`add it`: https://docs.djangoproject.com/en/dev/ref/settings/#template-context-processors
