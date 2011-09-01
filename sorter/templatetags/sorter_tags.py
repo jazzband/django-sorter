@@ -15,39 +15,34 @@ from sorter.utils import cycle_pairs
 register = template.Library()
 
 
+class SorterAsTag(ttag.helpers.AsTag):
 
-class ContextHasRequestMixin(object):
-    """
-    A mixin which checks if there is a ``request`` variable
-    included in the context.
-    """
     def clean(self, data, context):
+        """
+        Checks if there is a ``request`` variable
+        included in the context.
+        """
         request = context.get('request')
         if not request:
             raise TemplateSyntaxError("Couldn't find request in context: %s" %
                                       context)
-        return super(RequestExists, self).clean(data, context)
-
-
-class CleanQueryNameMixin(object):
-    """
-    A mixin to clean with given name of the sort query
-    """
+        return super(SorterAsTag, self).clean(data, context)
 
     def clean_with(self, value):
+        """
+        Cleans the given name of the sort query
+        """
         if not isinstance(value, basestring):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
         # in case the value equals the default query name
-        if value == settings.SORTER_QUERY_NAME:
-            return value
         # or it already has the default query name prefixed
-        elif value.startswith(settings.SORTER_QUERY_NAME):
+        if (value == settings.SORTER_QUERY_NAME or
+                value.startswith(settings.SORTER_QUERY_NAME)):
             return value
-        else:
-            return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
+        return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
 
 
-class Sort(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
+class Sort(SorterAsTag):
     """
     {% sort queryset [with NAME] as VARIABLE %}
 
@@ -89,7 +84,7 @@ class TemplateAsTagMetaclass(ttag.helpers.as_tag.AsTagMetaclass):
     options_class = TemplateAsTagOptions
 
 
-class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin, ContextHasRequestMixin):
+class Sortlink(SorterAsTag):
     """
     Parses a tag that's supposed to be in this format:
 
