@@ -1,3 +1,4 @@
+from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
@@ -73,9 +74,18 @@ class Sort(SorterAsTag):
         should return a list of ordering values.
         """
         try:
-            return context['request'].GET[name].split(',')
+            sort_fields = context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
             return []
+        allowed_ordering = settings.SORTER_ALLOWED_ORDERING.get(name, [])
+        if not allowed_ordering:
+            return sort_fields
+        result = []
+        for sort_field in sort_fields:
+            for ordering in allowed_ordering:
+                if fnmatch(sort_field.lstrip('-'), ordering):
+                    result.append(sort_field)
+        return result
 
 
 class TemplateAsTagOptions(ttag.helpers.as_tag.AsTagOptions):
@@ -138,7 +148,7 @@ class Sortlink(SorterAsTag):
             else:
                 # Translators: Used in title of ascending sort fields
                 text = _("'%(sort_field)s' (asc)")
-            parts.append(txt % {'sort_field': part})
+            parts.append(text % {'sort_field': part})
         # Translators: Used for the link/form input title excluding the sort fields
         title = (_('Sort by: %(sort_fields)s') %
                  {'sort_fields': get_text_list(parts, _('and'))})

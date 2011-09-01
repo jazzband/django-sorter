@@ -144,14 +144,22 @@ class SortTests(SorterTestCase):
         finally:
             settings.SORTER_EVALUATE_AFTERWARDS = old_setting
 
-    def test_complex(self):
-
-        testuser = self.create_user()
-        self.create_posts(3, author=testuser)
-        testuser2 = self.create_user('testuser2', 'testuser2@test.de')
-
-        self.create_posts(3, author=testuser2)
-        self.assertEqual(Post.objects.count(), 9)
+    def test_allowed_ordering(self):
+        old_setting = settings.SORTER_ALLOWED_ORDERING
+        try:
+            settings.SORTER_ALLOWED_ORDERING = {
+                'sort': ['non-existing'],
+                'sort_objects': ['created', 'author__*'],
+            }
+            self.assertViewRenders(
+                "{% sort objects as sorted %}{{ sorted|pks }}",
+                "1.2.3", {'sort': '-id'}, objects=Post.objects.all())
+            self.assertViewRenders(
+                "{% sort objects with 'objects' as sorted %}{{ sorted|pks }}",
+                "1.2.3", {'sort_objects': '-id,created'},
+                objects=Post.objects.all())
+        finally:
+            settings.SORTER_ALLOWED_ORDERING = old_setting
 
 
 class SortlinkTests(SorterTestCase):
@@ -162,21 +170,21 @@ class SortlinkTests(SorterTestCase):
     def test_simple(self):
         self.assertViewRenders(
             """{% sortlink by "creation_date" %}Creation date{% endsortlink %}""",
-            """<a href="/?sort=creation_date" title="Sort by &#39;creation_date&#39; (asc)">Creation date</a>""")
+            """<a href="/?sort=creation_date" title="Sort by: &#39;creation_date&#39; (asc)">Creation date</a>""")
 
         self.assertViewRenders(
             """{% sortlink with "objects" by "creation_date,-title" %}Creation and title{% endsortlink %}""",
-            """<a href="/?sort_objects=creation_date%2C-title" title="Sort by &#39;creation_date&#39; (asc) and &#39;title&#39; (desc)">Creation and title</a>""")
+            """<a href="/?sort_objects=creation_date%2C-title" title="Sort by: &#39;creation_date&#39; (asc) and &#39;title&#39; (desc)">Creation and title</a>""")
 
     def test_attributes(self):
         self.assertViewRenders(
             """{% sortlink by "creation_date" rel "nofollow" class "sortlink" %}Creation date{% endsortlink %}""",
-            """<a href="/?sort=creation_date" title="Sort by &#39;creation_date&#39; (asc)" class="sortlink" rel="nofollow">Creation date</a>""")
+            """<a href="/?sort=creation_date" title="Sort by: &#39;creation_date&#39; (asc)" class="sortlink" rel="nofollow">Creation date</a>""")
 
     def test_cycling(self):
         self.assertViewRenders(
             """{% sortlink by "creation_date" "-creation_date" %}Creation date{% endsortlink %}""",
-            """<a href="/?sort=-creation_date" title="Sort by &#39;creation_date&#39; (desc)">Creation date</a>""",
+            """<a href="/?sort=-creation_date" title="Sort by: &#39;creation_date&#39; (desc)">Creation date</a>""",
             {'sort': 'creation_date'})
 
     def test_errors(self):
@@ -193,7 +201,7 @@ class SortFormTests(SorterTestCase):
             """\
 <form action="" method="get">
     <input type="hidden" name="sort" value="creation_date" />
-    <input type="submit" value="Creation date" title="Sort by &#39;creation_date&#39; (asc)" />
+    <input type="submit" value="Creation date" title="Sort by: &#39;creation_date&#39; (asc)" />
 </form>""")
 
     def test_post(self):
@@ -206,5 +214,5 @@ class SortFormTests(SorterTestCase):
             """\
 <form action="" method="post">
     <input type="hidden" name="sort" value="creation_date" />
-    <input type="submit" value="Creation date" title="Sort by &#39;creation_date&#39; (asc)" />
+    <input type="submit" value="Creation date" title="Sort by: &#39;creation_date&#39; (asc)" />
 </form>""")
