@@ -131,9 +131,12 @@ class Sortlink(SorterAsTag):
                 dir_, part = 'desc', part.lstrip('-')
             else:
                 dir_ = 'asc'
+            # Translators: A part of the link title
             parts.append(_("'%(part)s' (%(dir)s)") %
                            {'dir': dir_, 'part': part})
+        # Translators: The link title excluding the sort fields
         title = _('Sort by %s') % get_text_list(parts, _('and'))
+
         extra_context = dict(data, title=title, label=label, url=url, query=query)
         return render_to_string(self.using(data), extra_context, context)
 
