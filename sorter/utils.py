@@ -9,5 +9,5 @@ def cycle_pairs(iterable):
     """
     first, last = iterable[0], iterable[-1]
     a, b = tee(iterable)
-    next(b, None)
+    iter(b).next()
     return chain(izip(a, b), [(last, first)])
