@@ -154,12 +154,11 @@ class Sortlink(SorterAsTag):
         but uses 'sorter/sortlink_NAME.html' additionally if the
         'with' argument is given.
         """
-        template_name = 'sorter/%s.html' % self._meta.template_name
         name = data.get('with')
-        if not name:
-            return template_name
-        return ['sorter/%s_%s.html' %
-                (self._meta.template_name, name)] + [template_name]
+        template_names = [self._meta.template_name]
+        if name and name != settings.SORTER_QUERY_NAME:
+            template_names.append(u'%s_%s' % (self._meta.template_name, name))
+        return [u"sorter/%s.html" % name for name in template_names]
 
 
 class Sortform(Sortlink):
