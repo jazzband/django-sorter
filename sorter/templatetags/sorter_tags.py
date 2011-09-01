@@ -132,14 +132,16 @@ class Sortlink(SorterAsTag):
         for part in query.split(','):
             part = part.strip()
             if part.startswith('-'):
-                dir_, part = 'desc', part.lstrip('-')
+                part = part.lstrip('-')
+                # Translators: Used in title of descending sort fields
+                text = _("'%(sort_field)s' (desc)")
             else:
-                dir_ = 'asc'
-            # Translators: A part of the link title
-            parts.append(_("'%(part)s' (%(dir)s)") %
-                           {'dir': dir_, 'part': part})
-        # Translators: The link title excluding the sort fields
-        title = _('Sort by %s') % get_text_list(parts, _('and'))
+                # Translators: Used in title of ascending sort fields
+                text = _("'%(sort_field)s' (asc)")
+            parts.append(txt % {'sort_field': part})
+        # Translators: Used for the link/form input title excluding the sort fields
+        title = (_('Sort by: %(sort_fields)s') %
+                 {'sort_fields': get_text_list(parts, _('and'))})
 
         extra_context = dict(data, title=title, label=label, url=url, query=query)
         return render_to_string(self.using(data), extra_context, context)

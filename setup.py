@@ -15,7 +15,10 @@ setup(
     url='http://github.com/jezdez/django-sorter/',
     packages=['sorter', 'sorter.templatetags'],
     package_data={
-        'sorter': ['templates/sorter/*.html'],
+        'sorter': [
+            'templates/sorter/*.html',
+            'locale/*/*/*.po',
+        ],
     },
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -2,3 +2,4 @@ include AUTHORS
 include LICENSE
 include README.rst
 recursive-include sorter/templates *.html
+recursive-include sorter/locale *.po *.mo
