@@ -17,7 +17,7 @@ setup(
     package_data={
         'sorter': [
             'templates/sorter/*.html',
-            'locale/*/*/*.po',
+            'locale/*/*/*',
         ],
     },
     classifiers=[
