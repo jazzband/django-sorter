@@ -221,4 +221,34 @@ rendered::
         <input type="submit" value="Creation date" title="Sort by: 'creation_date' (asc)" />
     </form>
 
+.. _sorturl:
+
+URL
+---
+
+As a quick helper in case you don't like ``django-sorter`` to generate
+the links or forms for your sorting efforts, you can also use the simple
+``sorturl`` template tag::
+
+    {% sorturl with "posts" by "creation_date" %}
+
+would only return the URL to the sorting::
+
+    /blog/?sort_posts=creation_date
+
+Don't forget that it also takes an optional ``as`` parameter (like the rest
+of the parameters described for the :ref:`sort<sort>` template tag). That's
+great for storing the URL to further mangle it or use it for other template-y
+things, e.g.::
+
+    {% sorturl with "posts" by "creation_date" as sort_by_date_url %}
+
+    {% blocktrans with sort_by_date_url as url %}
+    Please visit the following URL to sort by date:
+
+        http://example.com{{ sort_by_date_url }}
+
+    Thanks!
+    {% endblocktrans %}
+
 .. _querystring: http://en.wikipedia.org/wiki/Querystring
