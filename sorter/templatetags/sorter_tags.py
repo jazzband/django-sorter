@@ -37,10 +37,10 @@ class SorterAsTag(ttag.helpers.AsTag):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
         # in case the value equals the default query name
         # or it already has the default query name prefixed
-        if (value == settings.SORTER_QUERY_NAME or
-                value.startswith(settings.SORTER_QUERY_NAME)):
+        if (value == settings.SORTER_DEFAULT_QUERY_NAME or
+                value.startswith(settings.SORTER_DEFAULT_QUERY_NAME)):
             return value
-        return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
+        return '%s_%s' % (settings.SORTER_DEFAULT_QUERY_NAME, value)
 
 
 class Sort(SorterAsTag):
@@ -50,23 +50,13 @@ class Sort(SorterAsTag):
     {% sort object_list with "objects" as sorted_objects %}
 
     """
-    exceptions = (FieldError,)
-
     data = ttag.Arg()
-    with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_QUERY_NAME)
+    with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_DEFAULT_QUERY_NAME)
 
     def as_value(self, data, context):
         value = data['data']
         ordering = self.ordering(context, data['with'])
-        try:
-            ordered_value = value.order_by(*ordering)
-            if settings.SORTER_EVALUATE_AFTERWARDS:
-                ordered_value = list(ordered_value)
-            return ordered_value
-        except self.exceptions:
-            if settings.SORTER_RAISE_EXCEPTIONS:
-                raise
-        return value
+        return value.order_by(*ordering)
 
     def ordering(self, context, name):
         """
@@ -77,12 +67,16 @@ class Sort(SorterAsTag):
             sort_fields = context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
             return []
-        allowed_ordering = settings.SORTER_ALLOWED_ORDERING.get(name, [])
-        if not allowed_ordering:
-            return sort_fields
         result = []
+        ALLOWED_CRITERIA = settings.SORTER_ALLOWED_CRITERIA.get(name)
+        if ALLOWED_CRITERIA is None:
+            return result
+        elif not ALLOWED_CRITERIA:
+            raise ImproperlyConfigured("The '%s' SORTER_ALLOWED_CRITERIA "
+                                       "setting is empty. Please set it." %
+                                       name)
         for sort_field in sort_fields:
-            for ordering in allowed_ordering:
+            for ordering in ALLOWED_CRITERIA:
                 if fnmatch(sort_field.lstrip('-'), ordering):
                     result.append(sort_field)
         return result
@@ -114,7 +108,7 @@ class Sortlink(SorterAsTag):
     """
     __metaclass__ = TemplateAsTagMetaclass
 
-    with_ = ttag.Arg(required=False, named=True, default=settings.SORTER_QUERY_NAME)
+    with_ = ttag.Arg(required=False, named=True, default=settings.SORTER_DEFAULT_QUERY_NAME)
     rel = ttag.Arg(required=False, named=True)
     class_ = ttag.Arg(required=False, named=True)
     by = ttag.MultiArg(named=True)
@@ -175,7 +169,7 @@ class Sortlink(SorterAsTag):
         """
         name = data.get('with')
         template_names = [self._meta.template_name]
-        if name and name != settings.SORTER_QUERY_NAME:
+        if name and name != settings.SORTER_DEFAULT_QUERY_NAME:
             template_names.append(u'%s_%s' % (self._meta.template_name, name))
         return [u"sorter/%s.html" % name for name in template_names]
 

@@ -49,7 +49,7 @@ class SorterTestCase(TestCase):
         context = self.create_context(request=request, **kwargs)
         response = self.create_response(request, template, context)
         self.assertContains(response, result,
-                            msg_prefix="Got: '%s'" % response.content)
+                            msg_prefix="Got: '%s'" % response.content.strip())
 
     def assertViewRaises(self, exception, template, query=None, with_request=True, **kwargs):
         request = self.rf.get('/', data=query or {})
@@ -116,38 +116,10 @@ class SortTests(SorterTestCase):
             "{% sort objects with another_var as sorted %}{{ sorted|pks }}",
             {'sort': 'id'}, objects=Post.objects.all(), another_var=123)
 
-    def test_ordering_raises_exception(self):
-        old_setting = settings.SORTER_RAISE_EXCEPTIONS
+    def test_ALLOWED_CRITERIA(self):
+        old_setting = settings.SORTER_ALLOWED_CRITERIA
         try:
-            settings.SORTER_RAISE_EXCEPTIONS = True
-            self.assertViewRaises(FieldError,
-                "{% sort objects as sorted %}{{ sorted|pks }}",
-                {'sort': 'asd'}, objects=Post.objects.all())
-        finally:
-            settings.SORTER_RAISE_EXCEPTIONS = old_setting
-
-        self.assertViewRenders(
-            "{% sort objects as sorted %}{{ sorted|pks }}",
-            "1.2.3", {'sort': 'asd'}, objects=Post.objects.all())
-
-    def test_evaluate_afterwards(self):
-        old_setting = settings.SORTER_EVALUATE_AFTERWARDS
-        try:
-            settings.SORTER_EVALUATE_AFTERWARDS = False
-            self.assertViewRenders("""
-                {% sort objects with "sort1" as by_created %}
-                {% sort by_created with "sort2" as by_id_and_created %}
-                {{ by_id_and_created|pks }}
-                """, "1.2.3",
-                {"sort1": "created", "sort2": "id"},
-                objects=Post.objects.all())
-        finally:
-            settings.SORTER_EVALUATE_AFTERWARDS = old_setting
-
-    def test_allowed_ordering(self):
-        old_setting = settings.SORTER_ALLOWED_ORDERING
-        try:
-            settings.SORTER_ALLOWED_ORDERING = {
+            settings.SORTER_ALLOWED_CRITERIA = {
                 'sort': ['non-existing'],
                 'sort_objects': ['created', 'author__*'],
             }
@@ -159,7 +131,7 @@ class SortTests(SorterTestCase):
                 "1.2.3", {'sort_objects': '-id,created'},
                 objects=Post.objects.all())
         finally:
-            settings.SORTER_ALLOWED_ORDERING = old_setting
+            settings.SORTER_ALLOWED_CRITERIA = old_setting
 
 
 class SortlinkTests(SorterTestCase):

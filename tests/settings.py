@@ -15,3 +15,12 @@ INSTALLED_APPS = [
     'sorter',
     'sorter_tests',
 ]
+
+
+SORTER_ALLOWED_CRITERIA = {
+    'sort': ['*'],
+    'sort_objects': ['*'],
+    'sort1': ['*'],
+    'sort2': ['*'],
+    'sort_others': ['*'],
+}
