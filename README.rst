@@ -2,16 +2,9 @@ django-sorter
 =============
 
 ``django-sorter`` helps with sorting objects in Django templates without
-modifying your views.
-
-- You can use multiple sorter on the same page.
-
-- It contains helpers to easily generate links and forms
-  to switch the sorting criteria, including the order.
-  The ability to provide multiple sorting criterias allows
-  flexible definition of sorting cycles.
-
-- The
+modifying your views, can be used multiple times on the same page or
+template, provides helpers to easily generate links and forms to switch
+the sorting criteria (including the sort order) and has 100% test coverage.
 
 Quickstart
 ----------
