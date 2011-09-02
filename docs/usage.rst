@@ -1,14 +1,12 @@
 Usage
 =====
 
-.. currentmodule:: sorter.templatetags.sorter_tags
-
 .. highlight:: html+django
+
+.. _sort:
 
 Sorting
 -------
-
-.. function:: sort
 
 The center piece of the app is the ``{% sort %}`` template tag which
 takes one required and one optional argument.
@@ -78,10 +76,10 @@ parameter to the template tag is ``"posts"``::
 
     http://example.com/blog/?sort_posts=creation_date
 
+.. _sortlink:
+
 Links
 -----
-
-.. function:: sortlink
 
 When sorting objects it's usually required to link to other sorting
 criterias. ``django-sorter`` includes the ``{% sortlink %}`` template tag
@@ -92,12 +90,11 @@ sorting criterias::
         LABEL
     {% endsortlink %}
 
-As with the :func:`{% sort %}<sorter.templatetags.sorter_tags.sort>` template
-tag, ``sortlink`` takes the name of the querystring parameter it's
-supposed to be working with.
+As with the :ref:`{% sort %}<sort>` template tag, ``sortlink`` takes the
+name of the querystring parameter it's supposed to be working with.
 
 For example, the following code would fit the example
-:func:`shown above<sorter.templatetags.sorter_tags.sort>`::
+:ref:`shown above<sort>`::
 
     {% sortlink with "posts" by "title" %}Title{% endsortlink %}
 
@@ -196,20 +193,20 @@ For example, if you'd be on the page with the URL
 Of course, if the last sorting criteria is found the current request's
 querystring, it'll start with the first again.
 
+.. _sortform:
+
 Forms
 -----
 
-.. function:: sortform
-
-Other than the :func:`~sorter.templatetags.sorter_tags.sortlink` template
-tag, ``django-sorter`` also ships with a second template tag to apply
-other sorting criterias -- the ``sortform`` tag.
+Other than the :ref:`sortlink<sortlink>` template tag, ``django-sorter``
+also ships with a second template tag to apply other sorting criterias --
+the ``sortform`` tag.
 
 It works basically the same as ``sortlink`` and uses the same code behind
 the scenes, but looks for a different template: ``sorter/sortform.html``.
-Just like the :func:`~sorter.templatetags.sorter_tags.sortlink` tag it'll
-use the name of the querystring parameter if given to additionally look for
-a specific template, e.g. ``sorter/sortform_posts.html``
+Just like the :ref:`sortlink<sortlink>` tag it'll use the name of the
+querystring parameter if given to additionally look for a specific template,
+e.g. ``sorter/sortform_posts.html``
 
 An example::
 
