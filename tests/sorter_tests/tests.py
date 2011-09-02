@@ -175,16 +175,3 @@ class SortFormTests(SorterTestCase):
     <input type="hidden" name="sort" value="creation_date" />
     <input type="submit" value="Creation date" title="Sort by: &#39;creation_date&#39; (asc)" />
 </form>""")
-
-    def test_post(self):
-        """
-        The csrf token isn't shown in the follow example since it's really
-        not included in the context.
-        """
-        self.assertViewRenders(
-            """{% sortform by "creation_date" method "post" %}Creation date{% endsortform %}""",
-            """\
-<form action="" method="post">
-    <input type="hidden" name="sort" value="creation_date" />
-    <input type="submit" value="Creation date" title="Sort by: &#39;creation_date&#39; (asc)" />
-</form>""")

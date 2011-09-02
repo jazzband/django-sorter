@@ -178,16 +178,15 @@ class Sortform(Sortlink):
     """
     Parses a tag that's supposed to be in this format:
 
-    {% sortform [with NAME] [rel REL] [method METHOD] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
+    {% sortform [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
         LABEL
     {% endsortform %}
 
-    {% sortform with "objects" by "creation_date,-title" method "post" %}
+    {% sortform with "objects" by "creation_date,-title" %}
         {% trans "Creation and title" %}
     {% endsortform %}
 
     """
-    method = ttag.Arg(named=True, required=False, default='get')
 
     class Meta:
         block = True
