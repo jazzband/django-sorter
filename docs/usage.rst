@@ -223,8 +223,8 @@ rendered::
 
 .. _sorturl:
 
-URL
----
+URLs
+----
 
 As a quick helper in case you don't like ``django-sorter`` to generate
 the links or forms for your sorting efforts, you can also use the simple
