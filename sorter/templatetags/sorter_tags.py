@@ -3,7 +3,7 @@ from urlobject import URLObject
 
 from django import template
 from django.conf import settings
-from django.core.exceptions import FieldError
+from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -93,17 +93,13 @@ class TemplateAsTagMetaclass(ttag.helpers.as_tag.AsTagMetaclass):
     options_class = TemplateAsTagOptions
 
 
-class Sortlink(SorterAsTag):
+class SortURL(SorterAsTag):
     """
     Parses a tag that's supposed to be in this format:
 
-    {% sortlink [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
-        LABEL
-    {% endsortlink %}
+    {% sorturl [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
 
-    {% sortlink with "objects" by "creation_date,-title" %}
-        {% trans "Creation and title" %}
-    {% endsortlink %}
+    {% sorturl with "objects" by "creation_date,-title" %}
 
     """
     __metaclass__ = TemplateAsTagMetaclass
@@ -114,15 +110,11 @@ class Sortlink(SorterAsTag):
     by = ttag.MultiArg(named=True)
 
     class Meta:
-        block = True
         as_required = False
-        template_name = 'sortlink'
+        template_name = 'sorturl'
+        name = 'sorturl'
 
     def as_value(self, data, context):
-        label = self.nodelist.render(context)
-        if not label.strip():
-            raise TemplateSyntaxError("No label was specified")
-
         # The queries of the current URL, not using sequences here
         # since the order of sorting arguments matter
         url = URLObject.parse(context['request'].get_full_path())
@@ -131,6 +123,14 @@ class Sortlink(SorterAsTag):
         name, orderings = data['with'], data['by']
         query = self.find_query(queries.get(name), orderings, orderings[0])
         url = url.set_query_param(name, query)
+
+        # If this isn't a block tag we probably only want the URL
+        if not self._meta.block:
+            return url
+
+        label = self.nodelist.render(context)
+        if not label.strip():
+            raise TemplateSyntaxError("No label was specified")
 
         parts = []
         for part in query.split(','):
@@ -163,8 +163,8 @@ class Sortlink(SorterAsTag):
 
     def using(self, data):
         """
-        This template tag will use 'sorter/sortlink.html' by default,
-        but uses 'sorter/sortlink_NAME.html' additionally if the
+        This template tag will use 'sorter/sorturl.html' by default,
+        but uses 'sorter/sorturl_NAME.html' additionally if the
         'with' argument is given.
         """
         name = data.get('with')
@@ -174,7 +174,26 @@ class Sortlink(SorterAsTag):
         return [u"sorter/%s.html" % name for name in template_names]
 
 
-class Sortform(Sortlink):
+class Sortlink(SortURL):
+    """
+    Parses a tag that's supposed to be in this format:
+
+    {% sortlink [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
+        LABEL
+    {% endsortlink %}
+
+    {% sortlink with "objects" by "creation_date,-title" %}
+        {% trans "Creation and title" %}
+    {% endsortlink %}
+
+    """
+    class Meta:
+        block = True
+        as_required = False
+        template_name = 'sortlink'
+
+
+class Sortform(SortURL):
     """
     Parses a tag that's supposed to be in this format:
 
@@ -187,7 +206,6 @@ class Sortform(Sortlink):
     {% endsortform %}
 
     """
-
     class Meta:
         block = True
         as_required = False
@@ -195,5 +213,6 @@ class Sortform(Sortlink):
 
 
 register.tag(Sort)
+register.tag(SortURL)
 register.tag(Sortlink)
 register.tag(Sortform)

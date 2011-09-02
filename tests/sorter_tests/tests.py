@@ -134,10 +134,17 @@ class SortTests(SorterTestCase):
             settings.SORTER_ALLOWED_CRITERIA = old_setting
 
 
-class SortlinkTests(SorterTestCase):
+class SortURLTests(SorterTestCase):
 
     def test_cycle_pairs(self):
         self.assertEqual(list(cycle_pairs([1, 2, 3])), [(1, 2), (2, 3), (3, 1)])
+
+    def test_simple(self):
+        self.assertViewRenders(
+            """{% sorturl by "creation_date" %}""",
+            """/?sort=creation_date""")
+
+class SortlinkTests(SorterTestCase):
 
     def test_simple(self):
         self.assertViewRenders(
