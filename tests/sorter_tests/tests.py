@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from django import template
-from django.conf import settings
 from django.core.exceptions import FieldError
 from django.test.client import RequestFactory
 from django.template import Template, Context, TemplateSyntaxError
@@ -11,7 +10,7 @@ from django.contrib.auth.models import User
 
 from milkman.dairy import milkman
 
-from sorter.models import SorterConf
+from sorter.conf import settings
 from sorter.utils import cycle_pairs
 
 from .models import Post

@@ -2,7 +2,6 @@ from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
@@ -11,6 +10,7 @@ from django.utils.text import get_text_list
 
 import ttag
 
+from sorter.conf import settings
 from sorter.utils import cycle_pairs
 
 register = template.Library()
@@ -68,16 +68,12 @@ class Sort(SorterAsTag):
         except (KeyError, ValueError, TypeError):
             return []
         result = []
-        ALLOWED_CRITERIA = settings.SORTER_ALLOWED_CRITERIA.get(name)
-        if ALLOWED_CRITERIA is None:
+        allowed_criteria = settings.SORTER_ALLOWED_CRITERIA.get(name)
+        if allowed_criteria is None:
             return result
-        elif not ALLOWED_CRITERIA:
-            raise ImproperlyConfigured("The '%s' SORTER_ALLOWED_CRITERIA "
-                                       "setting is empty. Please set it." %
-                                       name)
         for sort_field in sort_fields:
-            for ordering in ALLOWED_CRITERIA:
-                if fnmatch(sort_field.lstrip('-'), ordering):
+            for criteria in allowed_criteria:
+                if fnmatch(sort_field.lstrip('-'), criteria):
                     result.append(sort_field)
         return result
 
