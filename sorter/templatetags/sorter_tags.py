@@ -1,9 +1,8 @@
-from itertools import tee, izip, chain
+from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
-from django.conf import settings
-from django.core.exceptions import FieldError
+from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -11,122 +10,140 @@ from django.utils.text import get_text_list
 
 import ttag
 
+from sorter.conf import settings
+from sorter.utils import cycle_pairs
+
 register = template.Library()
 
 
-def cycle_pairs(iterable):
-    """
-    Cycles through the given iterable, returning an iterator which
-    returns the current and the next item. When reaching the end
-    it returns the last and the first item.
-    """
-    first, last = iterable[0], iterable[-1]
-    a, b = tee(iterable)
-    next(b, None)
-    return chain(izip(a, b), [(last, first)])
+class SorterAsTag(ttag.helpers.AsTag):
 
+    def clean(self, data, context):
+        """
+        Checks if there is a ``request`` variable
+        included in the context.
+        """
+        request = context.get('request')
+        if not request:
+            raise TemplateSyntaxError("Couldn't find request in context: %s" %
+                                      context)
+        return super(SorterAsTag, self).clean(data, context)
 
-class CleanQueryNameMixin(object):
-    """
-    A mixin to clean with given name of the sort query
-    """
     def clean_with(self, value):
+        """
+        Cleans the given name of the sort query
+        """
         if not isinstance(value, basestring):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
-        if value == settings.SORTER_QUERY_NAME:
+        # in case the value equals the default query name
+        # or it already has the default query name prefixed
+        if (value == settings.SORTER_DEFAULT_QUERY_NAME or
+                value.startswith(settings.SORTER_DEFAULT_QUERY_NAME)):
             return value
-        return '%s_%s' % (settings.SORTER_QUERY_NAME, value)
+        return '%s_%s' % (settings.SORTER_DEFAULT_QUERY_NAME, value)
 
 
-class Sort(ttag.helpers.AsTag, CleanQueryNameMixin):
+class Sort(SorterAsTag):
     """
     {% sort queryset [with NAME] as VARIABLE %}
 
     {% sort object_list with "objects" as sorted_objects %}
 
     """
-    exceptions = [FieldError]
-
     data = ttag.Arg()
-    with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_QUERY_NAME)
-
-    def clean(self, data, context):
-        request = context.get('request')
-        if not request:
-            raise TemplateSyntaxError("Couldn't find request in context: %s" %
-                                      context)
-        return data
+    with_ = ttag.Arg(named=True, required=False, default=settings.SORTER_DEFAULT_QUERY_NAME)
 
     def as_value(self, data, context):
-        ordering = self.get_fields(context['request'], data['with'])
         value = data['data']
-        if ordering:
-            try:
-                return value.order_by(*ordering)
-            except self.exceptions:
-                if settings.SORTER_RAISE_EXCEPTIONS:
-                    raise
-        return value
+        ordering = self.ordering(context, data['with'])
+        return value.order_by(*ordering)
 
-    def get_fields(self, request, name):
+    def ordering(self, context, name):
+        """
+        Given the template context and the name of the sorting
+        should return a list of ordering values.
+        """
         try:
-            return request.GET[name].split(',')
+            sort_fields = context['request'].GET[name].split(',')
         except (KeyError, ValueError, TypeError):
-            pass
-        return []
+            return []
+        result = []
+        allowed_criteria = settings.SORTER_ALLOWED_CRITERIA.get(name)
+        if allowed_criteria is None:
+            return result
+        for sort_field in sort_fields:
+            for criteria in allowed_criteria:
+                if fnmatch(sort_field.lstrip('-'), criteria):
+                    result.append(sort_field)
+        return result
 
 
-class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin):
+class TemplateAsTagOptions(ttag.helpers.as_tag.AsTagOptions):
+
+    def __init__(self, meta, *args, **kwargs):
+        super(TemplateAsTagOptions, self).__init__(meta=meta, *args, **kwargs)
+        self.template_name = getattr(meta, 'template_name', 'sortlink')
+
+
+class TemplateAsTagMetaclass(ttag.helpers.as_tag.AsTagMetaclass):
+    options_class = TemplateAsTagOptions
+
+
+class SortURL(SorterAsTag):
     """
     Parses a tag that's supposed to be in this format:
 
-    {% sortlink [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
-        LABEL
-    {% endsortlink %}
+    {% sorturl [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
 
-    {% sortlink with "objects" by "creation_date,-title" %}
-        {% trans "Creation and title" %}
-    {% endsortlink %}
+    {% sorturl with "objects" by "creation_date,-title" %}
 
     """
-    with_ = ttag.Arg(required=False, named=True, default=settings.SORTER_QUERY_NAME)
+    __metaclass__ = TemplateAsTagMetaclass
+
+    with_ = ttag.Arg(required=False, named=True, default=settings.SORTER_DEFAULT_QUERY_NAME)
     rel = ttag.Arg(required=False, named=True)
     class_ = ttag.Arg(required=False, named=True)
     by = ttag.MultiArg(named=True)
 
     class Meta:
-        block = True
         as_required = False
+        template_name = 'sorturl'
+        name = 'sorturl'
 
     def as_value(self, data, context):
-        request = context.get('request')
-        if not request:
-            raise TemplateSyntaxError("Couldn't find request in context: %s" %
-                                      context)
-        label = self.nodelist.render(context)
-        if not label.strip():
-            raise TemplateSyntaxError("No label was specified")
-
         # The queries of the current URL, not using sequences here
         # since the order of sorting arguments matter
-        url = URLObject.parse(request.get_full_path())
+        url = URLObject.parse(context['request'].get_full_path())
         queries = url.query_dict(seq=False)
 
         name, orderings = data['with'], data['by']
         query = self.find_query(queries.get(name), orderings, orderings[0])
         url = url.set_query_param(name, query)
 
+        # If this isn't a block tag we probably only want the URL
+        if not self._meta.block:
+            return url
+
+        label = self.nodelist.render(context)
+        if not label.strip():
+            raise TemplateSyntaxError("No label was specified")
+
         parts = []
         for part in query.split(','):
             part = part.strip()
             if part.startswith('-'):
-                dir_, part = 'desc', part.lstrip('-')
+                part = part.lstrip('-')
+                # Translators: Used in title of descending sort fields
+                text = _("'%(sort_field)s' (desc)")
             else:
-                dir_ = 'asc'
-            parts.append(_("'%(part)s' (%(dir)s)") %
-                           {'dir': dir_, 'part': part})
-        title = _('Sort by %s') % get_text_list(parts, _('and'))
-        extra_context = dict(data, title=title, label=label, url=url)
+                # Translators: Used in title of ascending sort fields
+                text = _("'%(sort_field)s' (asc)")
+            parts.append(text % {'sort_field': part})
+        # Translators: Used for the link/form input title excluding the sort fields
+        title = (_('Sort by: %(sort_fields)s') %
+                 {'sort_fields': get_text_list(parts, _('and'))})
+
+        extra_context = dict(data, title=title, label=label, url=url, query=query)
         return render_to_string(self.using(data), extra_context, context)
 
     def find_query(self, wanted, orderings, default):
@@ -140,17 +157,58 @@ class Sortlink(ttag.helpers.AsTag, CleanQueryNameMixin):
                 return next
         return default
 
-    def using(self, data, template_name='sorter/sortlink.html'):
+    def using(self, data):
         """
-        This template tag will use 'sorter/sortlink.html' by default,
-        but uses 'sorter/sortlink_SUFFIX.html' additionally if the
+        This template tag will use 'sorter/sorturl.html' by default,
+        but uses 'sorter/sorturl_NAME.html' additionally if the
         'with' argument is given.
         """
         name = data.get('with')
-        if not name:
-            return template_name
-        return ['sorter/sortlink_%s.html' % name] + [template_name]
+        template_names = [self._meta.template_name]
+        if name and name != settings.SORTER_DEFAULT_QUERY_NAME:
+            template_names.append(u'%s_%s' % (self._meta.template_name, name))
+        return [u"sorter/%s.html" % name for name in template_names]
+
+
+class Sortlink(SortURL):
+    """
+    Parses a tag that's supposed to be in this format:
+
+    {% sortlink [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
+        LABEL
+    {% endsortlink %}
+
+    {% sortlink with "objects" by "creation_date,-title" %}
+        {% trans "Creation and title" %}
+    {% endsortlink %}
+
+    """
+    class Meta:
+        block = True
+        as_required = False
+        template_name = 'sortlink'
+
+
+class Sortform(SortURL):
+    """
+    Parses a tag that's supposed to be in this format:
+
+    {% sortform [with NAME] [rel REL] [class CLASS] [as VARIABLE] by ORDER_A1[,ORDER_A2,..] [ORDER_B1[,ORDER_B2,..]] .. %}
+        LABEL
+    {% endsortform %}
+
+    {% sortform with "objects" by "creation_date,-title" %}
+        {% trans "Creation and title" %}
+    {% endsortform %}
+
+    """
+    class Meta:
+        block = True
+        as_required = False
+        template_name = 'sortform'
 
 
 register.tag(Sort)
+register.tag(SortURL)
 register.tag(Sortlink)
+register.tag(Sortform)

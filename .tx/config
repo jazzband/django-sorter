@@ -1,0 +1,8 @@
+[main]
+host = https://www.transifex.net
+
+[django-sorter.main]
+file_filter = sorter/locale/<lang>/LC_MESSAGES/django.po
+source_file = sorter/locale/en/LC_MESSAGES/django.po
+source_lang = en
+
