@@ -21,7 +21,7 @@ setup(
         ],
     },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
@@ -34,11 +34,11 @@ setup(
         'Topic :: Utilities',
     ],
     setup_requires=[
-        'versiontools >= 1.6',
+        'versiontools >= 1.7',
     ],
     install_requires=[
         'django-appconf >= 0.4',
-        'django-ttag >= 2.2',
+        'django-ttag >= 2.3',
         'urlobject == 0.5.1',
     ],
 )
