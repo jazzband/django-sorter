@@ -13,14 +13,5 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.admin',
     'sorter',
-    'sorter_tests',
+    'django_jenkins',
 ]
-
-
-SORTER_ALLOWED_CRITERIA = {
-    'sort': ['*'],
-    'sort_objects': ['*'],
-    'sort1': ['*'],
-    'sort2': ['*'],
-    'sort_others': ['*'],
-}
