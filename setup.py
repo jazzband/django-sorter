@@ -12,7 +12,7 @@ setup(
     author='Jannis Leidel',
     author_email='jannis@leidel.info',
     license='BSD',
-    url='http://github.com/jezdez/django-sorter/',
+    url='http://django-sorter.readthedocs.org/',
     packages=['sorter', 'sorter.templatetags'],
     package_data={
         'sorter': [
