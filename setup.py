@@ -49,6 +49,6 @@ setup(
     install_requires=[
         'django-appconf >= 0.4',
         'django-ttag >= 2.3',
-        'URLObject == 0.5.1',
+        'URLObject >= 2.0.1',
     ],
 )
