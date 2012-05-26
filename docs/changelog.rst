@@ -9,6 +9,8 @@ v0.2 (2012-05-26)
 - Updated dependency of URLObject to > 2.0.1. This could backwards
   incomaptible if you're using a previous version (< 2.0).
 
+- Dropped support for Python 2.5.
+
 v0.1 (2011-09-07)
 -----------------
 
