@@ -2,7 +2,6 @@ from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
-from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -56,7 +55,9 @@ class Sort(SorterAsTag):
     def as_value(self, data, context):
         value = data['data']
         ordering = self.ordering(context, data['with'])
-        return value.order_by(*ordering)
+        if ordering:
+            return value.order_by(*ordering)
+        return value
 
     def ordering(self, context, name):
         """
@@ -113,8 +114,8 @@ class SortURL(SorterAsTag):
     def as_value(self, data, context):
         # The queries of the current URL, not using sequences here
         # since the order of sorting arguments matter
-        url = URLObject.parse(context['request'].get_full_path())
-        queries = url.query_dict(seq=False)
+        url = URLObject(context['request'].get_full_path())
+        queries = url.query.dict
 
         name, orderings = data['with'], data['by']
         query = self.find_query(queries.get(name), orderings, orderings[0])

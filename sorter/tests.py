@@ -1,38 +1,51 @@
-from django.test import TestCase
-
 from django import template
-from django.core.exceptions import FieldError
-from django.test.client import RequestFactory
-from django.template import Template, Context, TemplateSyntaxError
-from django.http import HttpResponse
-
 from django.contrib.auth.models import User
+from django.contrib.admin.models import LogEntry
+from django.http import HttpResponse
+from django.template import Library, Template, Context, TemplateSyntaxError
+from django.test import TestCase
+from django.test.client import RequestFactory
 
 from milkman.dairy import milkman
 
 from sorter.conf import settings
 from sorter.utils import cycle_pairs
 
-from .models import Post
+register = Library()
 
 template.add_to_builtins('sorter.templatetags.sorter_tags')
-template.add_to_builtins('sorter_tests.templatetags.sorter_test_tags')
+template.add_to_builtins('sorter.tests')
+
+
+@register.filter
+def sorter_tests_pks(value):
+    pk_list = []
+    for obj in value:
+        pk_list.append(str(obj.pk))
+    if pk_list:
+        return u'.'.join(pk_list)
+    return ''
 
 
 class SorterTestCase(TestCase):
 
     def setUp(self):
         self.rf = RequestFactory()
+        self.old_sorter_allowed_criteria = settings.SORTER_ALLOWED_CRITERIA
+        settings.SORTER_ALLOWED_CRITERIA = {
+            'sort': ['*'],
+            'sort_objects': ['*'],
+            'sort1': ['*'],
+            'sort2': ['*'],
+            'sort_others': ['*'],
+        }
 
-    def create_user(self, username='testuser', email='test@test.de', password='12345'):
-        try:
-            return User.objects.create_user(username, email, password)
-        except:
-            pass
+    def tearDown(self):
+        settings.SORTER_ALLOWED_CRITERIA = self.old_sorter_allowed_criteria
 
-    def create_posts(self, count, **kwargs):
-        posts = [milkman.deliver(Post, **kwargs) for i in range(count)]
-        return Post.objects.filter(pk__in=[post.pk for post in posts])
+    def create_entries(self, count, **kwargs):
+        entries = [milkman.deliver(LogEntry, **kwargs) for i in range(count)]
+        return LogEntry.objects.filter(pk__in=[entry.pk for entry in entries])
 
     def create_response(self, request, template, context=None):
         return HttpResponse(Template(template).render(Context(context)))
@@ -42,13 +55,18 @@ class SorterTestCase(TestCase):
         context.update(kwargs)
         return context
 
-    def assertViewRenders(self, template, result, query=None, **kwargs):
+    def assertViewRenders(self, template, result, query=None, func=None, **kwargs):
         # Create an instance of a GET request.
         request = self.rf.get('/', data=query or {})
         context = self.create_context(request=request, **kwargs)
         response = self.create_response(request, template, context)
-        self.assertContains(response, result,
-                            msg_prefix="Got: '%s'" % response.content.strip())
+        if func is None:
+            func = self.assertContains
+        func(response, result, msg_prefix="Got: '%s'" % response.content.strip())
+
+    def assertViewNotRenders(self, template, result, query=None, **kwargs):
+        self.assertViewRenders(template, result, query=None,
+                               func=self.assertNotContains, **kwargs)
 
     def assertViewRaises(self, exception, template, query=None, with_request=True, **kwargs):
         request = self.rf.get('/', data=query or {})
@@ -62,49 +80,57 @@ class SortTests(SorterTestCase):
 
     def setUp(self):
         super(SortTests, self).setUp()
-        self.post1, self.post2, self.post3 = self.create_posts(3)
+        self.entry1, self.entry2, self.entry3 = self.create_entries(3)
 
     def tearDown(self):
-        Post.objects.all().delete()
+        self.entry1.delete()
+        self.entry2.delete()
+        self.entry3.delete()
 
     def test_simple(self):
         self.assertViewRenders(
-            "{% sort objects as objects %}{{ objects|pks }}",
-            "1.2.3", {'sort': 'id'}, objects=Post.objects.all())
+            "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
+            "1.2.3", {'sort': 'id'}, objects=LogEntry.objects.all())
         self.assertViewRenders(
-            "{% sort objects as objects %}{{ objects|pks }}",
-            "3.2.1", {'sort': '-id'}, objects=Post.objects.all())
+            "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
+            "3.2.1", {'sort': '-id'}, objects=LogEntry.objects.all())
+        self.assertViewNotRenders(
+            "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
+            "3.2.1", {}, objects=LogEntry.objects.order_by('?'))
 
     def test_custom_name(self):
         query = {'sort_objects': '-id'}
-        kwargs = dict(objects=Post.objects.all())
+        kwargs = dict(objects=LogEntry.objects.all())
         self.assertViewRenders(
-            """{% sort objects with "objects" as objects %}{{ objects|pks }}""",
+            """{% sort objects with "objects" as objects %}{{ objects|sorter_tests_pks }}""",
             "3.2.1", query=query, **kwargs)
         self.assertViewRenders(
-            """{% sort objects with "sort_objects" as objects %}{{ objects|pks }}""",
+            """{% sort objects with "sort_objects" as objects %}{{ objects|sorter_tests_pks }}""",
             "3.2.1", query=query, **kwargs)
         self.assertViewRenders(
-            """{% sort objects with "sort_a_completely_different_objects" as objects %}{{ objects|pks }}""",
-            "1.2.3", query=query, **kwargs)
+            """{% sort objects with "sort_a_completely_different_objects" as objects %}{{ objects|sorter_tests_pks }}""",
+            "3.2.1", query=query, **kwargs)
 
     def test_request_not_in_context(self):
         self.assertViewRaises(TemplateSyntaxError,
-            """{% sort objects with "objects" as objects %}{{ objects|pks }}""",
-            {'sort': 'id'}, with_request=False, objects=Post.objects.all())
+            """{% sort objects with "objects" as objects %}{{ objects|sorter_tests_pks }}""",
+            {'sort': 'id'}, with_request=False, objects=LogEntry.objects.all())
 
     def test_multiple_sorting(self):
 
-        testuser = self.create_user()
-        self.create_posts(3, author=testuser)
-        self.assertEqual(Post.objects.count(), 6)
+        testuser = milkman.deliver(User)
+        testuser.set_password("letmein")
+        testuser.save()
+
+        self.create_entries(3, user=testuser)
+        self.assertEqual(LogEntry.objects.count(), 6)
         self.assertViewRenders("""
                 {% sort objects with "objects" as objects %}
                 {% sort others with "others" as others %}
-                {{ objects|pks }}.{{ others|pks }}
+                {{ objects|sorter_tests_pks }}.{{ others|sorter_tests_pks }}
             """, "3.2.1.6.5.4", {"sort_objects": "-id", "sort_others": "-id"},
-            objects=Post.objects.exclude(author=testuser),
-            others=Post.objects.filter(author=testuser))
+            objects=LogEntry.objects.exclude(user=testuser),
+            others=LogEntry.objects.filter(user=testuser))
 
     def test_name_is_not_basestring(self):
         """
@@ -112,23 +138,24 @@ class SortTests(SorterTestCase):
         accidently another object.
         """
         self.assertViewRaises(TemplateSyntaxError,
-            "{% sort objects with another_var as sorted %}{{ sorted|pks }}",
-            {'sort': 'id'}, objects=Post.objects.all(), another_var=123)
+            "{% sort objects with another_var as sorted %}{{ sorted|sorter_tests_pks }}",
+            {'sort': 'id'}, objects=LogEntry.objects.all(), another_var=123)
 
     def test_ALLOWED_CRITERIA(self):
         old_setting = settings.SORTER_ALLOWED_CRITERIA
         try:
             settings.SORTER_ALLOWED_CRITERIA = {
                 'sort': ['non-existing'],
-                'sort_objects': ['created', 'author__*'],
+                'sort_objects': ['action_time', 'user__*'],
             }
+            # This will follow the default order of the LogEntry class, -action_time
             self.assertViewRenders(
-                "{% sort objects as sorted %}{{ sorted|pks }}",
-                "1.2.3", {'sort': '-id'}, objects=Post.objects.all())
+                "{% sort objects as sorted %}{{ sorted|sorter_tests_pks }}",
+                "3.2.1", {'sort': 'id'}, objects=LogEntry.objects.all())
             self.assertViewRenders(
-                "{% sort objects with 'objects' as sorted %}{{ sorted|pks }}",
-                "1.2.3", {'sort_objects': '-id,created'},
-                objects=Post.objects.all())
+                "{% sort objects with 'objects' as sorted %}{{ sorted|sorter_tests_pks }}",
+                "1.2.3", {'sort_objects': '-id,action_time'},
+                objects=LogEntry.objects.all())
         finally:
             settings.SORTER_ALLOWED_CRITERIA = old_setting
 
@@ -142,6 +169,7 @@ class SortURLTests(SorterTestCase):
         self.assertViewRenders(
             """{% sorturl by "creation_date" %}""",
             """/?sort=creation_date""")
+
 
 class SortlinkTests(SorterTestCase):
 

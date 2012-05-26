@@ -1,4 +1,4 @@
-from django.conf import settings
+from django.conf import settings  # noqa
 from django.core.exceptions import ImproperlyConfigured
 from appconf import AppConf
 

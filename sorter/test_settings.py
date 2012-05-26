@@ -13,14 +13,8 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.admin',
     'sorter',
-    'sorter_tests',
 ]
 
+TEST_RUNNER = 'discover_runner.DiscoverRunner'
 
-SORTER_ALLOWED_CRITERIA = {
-    'sort': ['*'],
-    'sort_objects': ['*'],
-    'sort1': ['*'],
-    'sort2': ['*'],
-    'sort_others': ['*'],
-}
+SECRET_KEY = 'something-something'

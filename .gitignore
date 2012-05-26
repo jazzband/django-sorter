@@ -6,5 +6,4 @@ MANIFEST
 .tox/
 *.egg
 docs/_build/
-tests/.coverage
-tests/.tox
+.coverage
