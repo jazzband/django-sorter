@@ -2,7 +2,6 @@ from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
-from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
