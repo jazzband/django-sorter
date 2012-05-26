@@ -7,5 +7,3 @@ MANIFEST
 *.egg
 docs/_build/
 .coverage
-.tox
-reports/

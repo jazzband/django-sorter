@@ -13,5 +13,8 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.admin',
     'sorter',
-    'django_jenkins',
 ]
+
+TEST_RUNNER = 'discover_runner.DiscoverRunner'
+
+SECRET_KEY = 'something-something'
