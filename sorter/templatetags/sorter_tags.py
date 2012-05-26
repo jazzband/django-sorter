@@ -55,7 +55,9 @@ class Sort(SorterAsTag):
     def as_value(self, data, context):
         value = data['data']
         ordering = self.ordering(context, data['with'])
-        return value.order_by(*ordering)
+        if ordering:
+            return value.order_by(*ordering)
+        return value
 
     def ordering(self, context, name):
         """

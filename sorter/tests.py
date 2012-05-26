@@ -55,13 +55,18 @@ class SorterTestCase(TestCase):
         context.update(kwargs)
         return context
 
-    def assertViewRenders(self, template, result, query=None, **kwargs):
+    def assertViewRenders(self, template, result, query=None, func=None, **kwargs):
         # Create an instance of a GET request.
         request = self.rf.get('/', data=query or {})
         context = self.create_context(request=request, **kwargs)
         response = self.create_response(request, template, context)
-        self.assertContains(response, result,
-                            msg_prefix="Got: '%s'" % response.content.strip())
+        if func is None:
+            func = self.assertContains
+        func(response, result, msg_prefix="Got: '%s'" % response.content.strip())
+
+    def assertViewNotRenders(self, template, result, query=None, **kwargs):
+        self.assertViewRenders(template, result, query=None,
+                               func=self.assertNotContains, **kwargs)
 
     def assertViewRaises(self, exception, template, query=None, with_request=True, **kwargs):
         request = self.rf.get('/', data=query or {})
@@ -89,6 +94,9 @@ class SortTests(SorterTestCase):
         self.assertViewRenders(
             "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
             "3.2.1", {'sort': '-id'}, objects=LogEntry.objects.all())
+        self.assertViewNotRenders(
+            "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
+            "3.2.1", {}, objects=LogEntry.objects.order_by('?'))
 
     def test_custom_name(self):
         query = {'sort_objects': '-id'}
@@ -101,7 +109,7 @@ class SortTests(SorterTestCase):
             "3.2.1", query=query, **kwargs)
         self.assertViewRenders(
             """{% sort objects with "sort_a_completely_different_objects" as objects %}{{ objects|sorter_tests_pks }}""",
-            "1.2.3", query=query, **kwargs)
+            "3.2.1", query=query, **kwargs)
 
     def test_request_not_in_context(self):
         self.assertViewRaises(TemplateSyntaxError,
@@ -140,9 +148,10 @@ class SortTests(SorterTestCase):
                 'sort': ['non-existing'],
                 'sort_objects': ['action_time', 'user__*'],
             }
+            # This will follow the default order of the LogEntry class, -action_time
             self.assertViewRenders(
                 "{% sort objects as sorted %}{{ sorted|sorter_tests_pks }}",
-                "1.2.3", {'sort': '-id'}, objects=LogEntry.objects.all())
+                "3.2.1", {'sort': 'id'}, objects=LogEntry.objects.all())
             self.assertViewRenders(
                 "{% sort objects with 'objects' as sorted %}{{ sorted|sorter_tests_pks }}",
                 "1.2.3", {'sort_objects': '-id,action_time'},
