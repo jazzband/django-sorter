@@ -167,7 +167,7 @@ class SortURL(SorterAsTag):
         name = data.get('with')
         template_names = [self._meta.template_name]
         if name and name != settings.SORTER_DEFAULT_QUERY_NAME:
-            template_names.append(u'%s_%s' % (self._meta.template_name, name))
+            template_names.insert(0, u'%s_%s' % (self._meta.template_name, name))
         return [u"sorter/%s.html" % name for name in template_names]
 
 
