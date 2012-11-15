@@ -170,7 +170,6 @@ class SortURLTests(SorterTestCase):
             """{% sorturl by "creation_date" %}""",
             """/?sort=creation_date""")
 
-
 class SortlinkTests(SorterTestCase):
 
     def test_simple(self):
@@ -197,6 +196,11 @@ class SortlinkTests(SorterTestCase):
         self.assertViewRaises(TemplateSyntaxError,
             """{% sortlink with "objects" by "creation_date,-title" %}"""
             """{% endsortlink %}""")
+
+    def test_template_override(self):
+        self.assertViewRenders(
+            """{% sortlink with "test" by "creation_date,-title" %}Creation and title{% endsortlink %}""",
+            """I am a pretty custom template but i feel ignored.""")
 
 
 class SortFormTests(SorterTestCase):
