@@ -170,6 +170,7 @@ class SortURLTests(SorterTestCase):
             """{% sorturl by "creation_date" %}""",
             """/?sort=creation_date""")
 
+
 class SortlinkTests(SorterTestCase):
 
     def test_simple(self):

@@ -23,7 +23,7 @@ SECRET_KEY = 'something-something'
 
 BASE_DIR = os.path.dirname(__file__)
 
-TEMPLATE_DIRS=(
+TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
     os.path.join(BASE_DIR, 'templates', 'tests'),
 )
