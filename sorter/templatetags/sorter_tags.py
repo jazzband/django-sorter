@@ -120,6 +120,7 @@ class SortURL(SorterAsTag):
         name, orderings = data['with'], data['by']
         query = self.find_query(queries.get(name), orderings, orderings[0])
         url = url.set_query_param(name, query)
+        order = self.ordered(queries.get(name), orderings)
 
         # If this isn't a block tag we probably only want the URL
         if not self._meta.block:
@@ -144,8 +145,22 @@ class SortURL(SorterAsTag):
         title = (_('Sort by: %(sort_fields)s') %
                  {'sort_fields': get_text_list(parts, _('and'))})
 
-        extra_context = dict(data, title=title, label=label, url=url, query=query)
+        extra_context = dict(data, title=title, label=label, url=url, query=query, order=order)
         return render_to_string(self.using(data), extra_context, context)
+
+    def ordered(self, query, orderings):
+        """
+        Provides the ordering of the primary field to the template. The
+        values are ASC, DESC, or an empty string if the queryset is not
+        ordered by this url.
+        """
+        try:
+            if query not in orderings:
+                return ''
+            elif query.index('-') == 0:
+                return 'DESC' 
+        except ValueError:
+            return  'ASC'
 
     def find_query(self, wanted, orderings, default):
         """

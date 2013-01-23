@@ -198,6 +198,11 @@ class SortlinkTests(SorterTestCase):
             """{% sortlink with "objects" by "creation_date,-title" %}"""
             """{% endsortlink %}""")
 
+    def test_template_ordering(self):
+        self.assertViewRenders(
+            """{% sortlink with "order_test" by "title" "-title" %}Title{% endsortlink %}""",
+            """()""")
+
 
 class SortFormTests(SorterTestCase):
 
