@@ -1,4 +1,3 @@
-from fnmatch import fnmatch
 from urlobject import URLObject
 
 from django import template
@@ -11,6 +10,7 @@ import ttag
 
 from sorter.conf import settings
 from sorter.utils import cycle_pairs
+from sorter.utils import ordering
 
 register = template.Library()
 
@@ -54,30 +54,10 @@ class Sort(SorterAsTag):
 
     def as_value(self, data, context):
         value = data['data']
-        ordering = self.ordering(context, data['with'])
-        if ordering:
-            return value.order_by(*ordering)
+        order_by = ordering(context['request'], data['with'])
+        if order_by:
+            return value.order_by(*order_by)
         return value
-
-    def ordering(self, context, name):
-        """
-        Given the template context and the name of the sorting
-        should return a list of ordering values.
-        """
-        try:
-            sort_fields = context['request'].GET[name].split(',')
-        except (KeyError, ValueError, TypeError):
-            return []
-        result = []
-        allowed_criteria = settings.SORTER_ALLOWED_CRITERIA.get(name)
-        if allowed_criteria is None:
-            return result
-        for sort_field in sort_fields:
-            for criteria in allowed_criteria:
-                if fnmatch(sort_field.lstrip('-'), criteria):
-                    result.append(sort_field)
-        return result
-
 
 class TemplateAsTagOptions(ttag.helpers.as_tag.AsTagOptions):
 

@@ -1,5 +1,6 @@
 from itertools import tee, izip, chain
-
+from fnmatch import fnmatch
+from sorter.conf import settings
 
 def cycle_pairs(iterable):
     """
@@ -11,3 +12,22 @@ def cycle_pairs(iterable):
     a, b = tee(iterable)
     iter(b).next()
     return chain(izip(a, b), [(last, first)])
+
+def ordering(self, request, name):
+    """
+    Given the request and the name of the sorting
+    should return a list of ordering values.
+    """
+    try:
+        sort_fields = request.GET[name].split(',')
+    except (KeyError, ValueError, TypeError):
+        return []
+    result = []
+    allowed_criteria = settings.SORTER_ALLOWED_CRITERIA.get(name)
+    if allowed_criteria is None:
+        return result
+    for sort_field in sort_fields:
+        for criteria in allowed_criteria:
+            if fnmatch(sort_field.lstrip('-'), criteria):
+                result.append(sort_field)
+    return result
