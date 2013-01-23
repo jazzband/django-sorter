@@ -13,7 +13,7 @@ def cycle_pairs(iterable):
     iter(b).next()
     return chain(izip(a, b), [(last, first)])
 
-def ordering(self, request, name):
+def ordering(request, name):
     """
     Given the request and the name of the sorting
     should return a list of ordering values.
