@@ -2,24 +2,16 @@ import os
 import codecs
 import re
 from setuptools import setup
+from sorter import __version__ as VERSION
 
 
 def read(*parts):
     return codecs.open(os.path.join(os.path.dirname(__file__), *parts)).read()
 
 
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
-
-
 setup(
     name='django-sorter',
-    version=find_version("sorter", "__init__.py"),
+    version=VERSION,
     description='A helper app for sorting objects in Django templates.',
     long_description=read('README.rst'),
     author='Jannis Leidel',
