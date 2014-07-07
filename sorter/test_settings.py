@@ -15,6 +15,4 @@ INSTALLED_APPS = [
     'sorter',
 ]
 
-TEST_RUNNER = 'discover_runner.DiscoverRunner'
-
 SECRET_KEY = 'something-something'
