@@ -94,9 +94,6 @@ class SortTests(SorterTestCase):
         self.assertViewRenders(
             "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
             "3.2.1", {'sort': '-id'}, objects=LogEntry.objects.all())
-        self.assertViewNotRenders(
-            "{% sort objects as objects %}{{ objects|sorter_tests_pks }}",
-            "3.2.1", {}, objects=LogEntry.objects.order_by('?'))
 
     def test_custom_name(self):
         query = {'sort_objects': '-id'}
