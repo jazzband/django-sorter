@@ -3,8 +3,6 @@ python:
   - "2.6"
   - "2.7"
 before_install:
-  - export PIP_USE_MIRRORS=true
-  - export PIP_INDEX_URL=https://simple.crate.io/
   - export DJANGO_SETTINGS_MODULE=sorter.test_settings
 install:
   - pip install -e .
@@ -12,7 +10,8 @@ install:
 before_script:
   - flake8 sorter --ignore=E501
 script:
-  - make test
+  - coverage run --branch --source=sorter `which django-admin.py` test --settings=sorter.test_settings sorter
+  - coverage report --omit=sorter/test*
 env:
   - DJANGO=1.3.1
   - DJANGO=1.4
