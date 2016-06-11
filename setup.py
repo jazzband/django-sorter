@@ -25,7 +25,7 @@ setup(
     author='Jannis Leidel',
     author_email='jannis@leidel.info',
     license='BSD',
-    url='http://django-sorter.readthedocs.org/',
+    url='https://django-sorter.readthedocs.io/',
     packages=['sorter', 'sorter.templatetags'],
     package_data={
         'sorter': [
