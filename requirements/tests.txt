@@ -1,5 +1,5 @@
 docutils
-milkman
+model_mommy
 django-ttag>=2.3
 django-discover-runner
 coverage

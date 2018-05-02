@@ -15,6 +15,21 @@ INSTALLED_APPS = [
     'sorter',
 ]
 
-TEST_RUNNER = 'discover_runner.DiscoverRunner'
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+            ],
+            'builtins': [
+                'sorter.templatetags.sorter_tags',
+                'sorter.tests'
+            ],
+        },
+    },
+]
 
 SECRET_KEY = 'something-something'
