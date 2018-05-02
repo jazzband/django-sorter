@@ -1,4 +1,3 @@
-from django import template
 from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry
 from django.http import HttpResponse
@@ -12,9 +11,6 @@ from sorter.conf import settings
 from sorter.utils import cycle_pairs
 
 register = Library()
-
-template.add_to_builtins('sorter.templatetags.sorter_tags')
-template.add_to_builtins('sorter.tests')
 
 
 @register.filter

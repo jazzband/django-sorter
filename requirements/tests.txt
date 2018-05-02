@@ -1,5 +1,5 @@
 docutils
-milkman
+milkman==0.4.5
 django-ttag>=2.3
 django-discover-runner
 coverage
