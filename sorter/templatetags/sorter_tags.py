@@ -145,7 +145,8 @@ class SortURL(SorterAsTag):
                  {'sort_fields': get_text_list(parts, _('and'))})
 
         extra_context = dict(data, title=title, label=label, url=url, query=query)
-        return render_to_string(self.using(data), extra_context, context)
+        extra_context.update(context.flatten())
+        return render_to_string(self.using(data), extra_context)
 
     def find_query(self, wanted, orderings, default):
         """
