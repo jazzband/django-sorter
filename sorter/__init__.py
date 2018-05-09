@@ -1,1 +1,1 @@
-__version__ = "0.3-caktus"
+__version__ = "0.3"
