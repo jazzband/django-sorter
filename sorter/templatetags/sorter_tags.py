@@ -4,6 +4,7 @@ from urlobject import URLObject
 from django import template
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
+from django.utils.six import string_types
 from django.utils.translation import ugettext as _
 from django.utils.text import get_text_list
 
@@ -32,7 +33,7 @@ class SorterAsTag(ttag.helpers.AsTag):
         """
         Cleans the given name of the sort query
         """
-        if not isinstance(value, basestring):
+        if not isinstance(value, string_types):
             raise TemplateSyntaxError("Value '%s' is not a string" % value)
         # in case the value equals the default query name
         # or it already has the default query name prefixed
