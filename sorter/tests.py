@@ -1,4 +1,3 @@
-from django import template
 from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry
 from django.http import HttpResponse
@@ -6,15 +5,12 @@ from django.template import Library, Template, Context, TemplateSyntaxError
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from milkman.dairy import milkman
+from model_mommy import mommy
 
 from sorter.conf import settings
 from sorter.utils import cycle_pairs
 
 register = Library()
-
-template.add_to_builtins('sorter.templatetags.sorter_tags')
-template.add_to_builtins('sorter.tests')
 
 
 @register.filter
@@ -44,7 +40,7 @@ class SorterTestCase(TestCase):
         settings.SORTER_ALLOWED_CRITERIA = self.old_sorter_allowed_criteria
 
     def create_entries(self, count, **kwargs):
-        entries = [milkman.deliver(LogEntry, **kwargs) for i in range(count)]
+        entries = [mommy.make(LogEntry, **kwargs) for i in range(count)]
         return LogEntry.objects.filter(pk__in=[entry.pk for entry in entries])
 
     def create_response(self, request, template, context=None):
@@ -118,7 +114,7 @@ class SortTests(SorterTestCase):
 
     def test_multiple_sorting(self):
 
-        testuser = milkman.deliver(User)
+        testuser = mommy.make(User)
         testuser.set_password("letmein")
         testuser.save()
 
