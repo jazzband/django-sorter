@@ -1,9 +1,7 @@
 django-sorter
 =============
 
-.. image:: https://jazzband.co/static/img/badge.svg
-   :target: https://jazzband.co/
-   :alt: Jazzband
+This is a `Django Commons <https://github.com/django-commons/>`_ project.
 
 ``django-sorter`` helps with sorting objects in Django templates without
 modifying your views, can be used multiple times on the same page or
