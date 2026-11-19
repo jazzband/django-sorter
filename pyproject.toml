@@ -1,0 +1,56 @@
+[project]
+name = "django-sorter"
+dynamic = ["version"]
+description = "A helper app for sorting objects in Django templates."
+readme = "README.rst"
+license = {text = "BSD"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Jannis Leidel", email = "jannis@leidel.info"},
+    {name = "Matt Seymour", email = "mattaseymour@gmail.com"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Utilities",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "django-appconf >= 0.4",
+    "django-ttag >= 2.3",
+    "URLObject >= 2.0.1",
+]
+
+[project.urls]
+Homepage = "https://django-sorter.readthedocs.io/"
+
+[project.optional-dependencies]
+test = [
+    "docutils",
+    "model_mommy",
+    "django-discover-runner",
+    "coverage",
+    "flake8",
+]
+
+[tool.setuptools.packages.find]
+include = ["sorter*"]
+
+[tool.setuptools.package-data]
+sorter = ["templates/sorter/*.html", "locale/*/*/*"]
+
+[tool.setuptools_scm]
+
+[build-system]
+requires = ["setuptools>=84", "setuptools-scm>=10"]
+build-backend = "setuptools.build_meta"
