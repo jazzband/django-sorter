@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Switched to trusted publisher release process with Django Commons.
+
+- Switched from Jazzband org to Django Commons.
+
 v0.2 (2012-05-26)
 -----------------
 
